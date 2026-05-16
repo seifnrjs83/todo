@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+
+        <title>To-do</title>
+
+    </head>
+
+    <body>
+        <h1 class="a2">To do</h1>
+
+        <form class="a1">
+            <input type="text">
+            <button type="submit">작성</button>
+
+        </form>
+
+        <div id="notification" class="notification"></div>
+
+        <ul class="todolist">
+
+        </ul>
+    </body>
+
+    <script>
+
+    const form = document.querySelector(".a1");
+    const input = document.querySelector("input");
+    const todolist = document.querySelector(".todolist");
+    const notification = document.querySelector("#notification");
+
+    let todos = [];
+
+
+    function saveWithNotification() {
+        return new Promise(function(resolve) {
+            setTimeout(function() {
+                localStorage.setItem("todos", JSON.stringify(todos));
+                resolve("✓ 저장됨");
+            }, 200);
+        });
+    }
+
+    async function saveTodos() {
+        const message = await saveWithNotification();
+        showNotification(message);
+    }
+
+    function showNotification(message) {
+        notification.textContent = message;
+        notification.classList.add("show");
+        setTimeout(function() {
+            notification.classList.remove("show");
+        }, 1500);
+    }
+
+ 
+    function renderTodo(todoObj) {
+
+        const li = document.createElement("li");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = todoObj.completed;
+
+        const dateSpan = document.createElement("span");
+        dateSpan.textContent = todoObj.date;
+        dateSpan.classList.add("todo-date");
+
+        const span = document.createElement("span");
+        span.textContent = todoObj.text;
+        span.classList.add("todo-text");
+
+        if (todoObj.completed) {
+            span.classList.add("completed");
+        }
+
+        checkbox.addEventListener("change", function() {
+            todoObj.completed = !todoObj.completed;
+            span.classList.toggle("completed");
+            saveTodos();
+        });
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "삭제";
+        deleteBtn.classList.add("delete-btn");
+
+        deleteBtn.addEventListener("click", function() {
+            li.classList.add("deleting");
+            deleteBtn.disabled = true;
+
+            const undoBtn = document.createElement("button");
+            undoBtn.textContent = "취소";
+            undoBtn.classList.add("undo-btn");
+            li.appendChild(undoBtn);
+
+            let deleteTimer = setTimeout(function() {
+                li.remove();
+                todos = todos.filter(function(todo) {
+                    return todo !== todoObj;
+                });
+                saveTodos();
+            }, 3000);
+
+            undoBtn.addEventListener("click", function() {
+                clearTimeout(deleteTimer);
+                li.classList.remove("deleting");
+                deleteBtn.disabled = false;
+                undoBtn.remove();
+            });
+        });
+
+        li.appendChild(checkbox);
+        li.appendChild(dateSpan);
+        li.appendChild(span);
+        li.appendChild(deleteBtn);
+
+        todolist.appendChild(li);
+
+    }
+
+    const savedTodos = localStorage.getItem("todos");
+
+    if(savedTodos !== null){
+
+        todos = JSON.parse(savedTodos);
+
+   
+        todos = todos.map(function(todo) {
+            if (typeof todo === "string") {
+                return { text: todo, completed: false, date: "" };
+            }
+            return todo;
+        });
+
+        todos.forEach(function(todo){
+            renderTodo(todo);
+        });
+
+    }
+
+    form.addEventListener("submit", function(event){
+
+        event.preventDefault();
+
+        const todoText = input.value;
+
+        if (todoText === "") {
+
+            return;
+
+        }
+
+        const now = new Date();
+        const dateStr = now.getFullYear() + "." +
+            String(now.getMonth() + 1).padStart(2, "0") + "." +
+            String(now.getDate()).padStart(2, "0");
+
+        const newTodo = { text: todoText, completed: false, date: dateStr };
+
+        todos.push(newTodo);
+
+        saveTodos();
+
+        renderTodo(newTodo);
+
+        input.value = "";
+
+    });
+
+</script>
+
+
+
+    <style>
+        body {
+            background-color: black;
+            color: white;
+
+        }
+
+        .a1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .a2 {
+            text-align: center;
+        }
+
+        .todolist {
+            padding: 0;
+        }
+
+        .todolist li{
+            padding: 3px 10px;
+            width: 800px;
+            margin: 0 auto;
+            color: white;
+            background-color: #333;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .todo-date {
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 0.8em;
+            white-space: nowrap;
+        }
+
+        .todo-text {
+            flex: 1;
+            text-align: center;
+        }
+
+        .delete-btn {
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .deleting {
+            opacity: 0.5;
+            background-color: #550000;
+        }
+
+        .undo-btn {
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 2px 6px;
+            flex-shrink: 0;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #550000;
+            padding: 2px 4px;
+            
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</html>
