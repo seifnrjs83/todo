@@ -35,33 +35,51 @@
     const todoInput = document.getElementById('todo-input');
     const todoList = document.getElementById('todo-list');
     const todoTemplate = document.getElementById('todo-template');
+
+    let todos = [];
     // 할일 생성 이벤트 작성
-    const handleFormSubmit = (event) => {
-        event.preventDefault();
 
-        const inputValue = todoInput.value.trim();
-
-        if (inputValue === '') return;
- 
-        const todoItem = todoTemplate.content
+    const saveTodos = () => {
+            localStorage.setItem(
+                'todos', JSON.stringify(todos)
+            );
+        };
+    
+    const createTodo = (todoData) => {
+          const todoItem = todoTemplate.content
             .cloneNode(true)
             .querySelector('.todo-item');
 
-            //itemtitle 중복 호출 방지, const로 정의
+                 //itemtitle 중복 호출 방지, const로 정의
         const itemTitle = todoItem.querySelector('.item-title');
         
-            itemTitle.textContent = inputValue;
-            itemTitle.addEventListener('click', () => {
-                todoItem.classList.toggle('completed');
-            });
+            itemTitle.textContent = todoData.text;
+
+        if (todoData.completed) {
+            todoItem.classList.add('completed');
+        }
+
+        itemTitle.addEventListener('click', () => {
+            todoItem.classList.toggle('completed');
+
+            todoData.completed = !todoData.completed;
+
+            saveTodos();
+        });
 
         const deleteBtn = todoItem.querySelector('.delete-btn');
 
         deleteBtn.addEventListener('click', () => {
             todoItem.remove();
-        });
 
-        const editBtn = todoItem.querySelector('.edit-btn');
+            todos = todos.filter((todo) => {
+                return todo.id !== todoData.id;
+            });
+
+            saveTodos();
+        });
+        
+         const editBtn = todoItem.querySelector('.edit-btn');
 
         // 수정버튼 여러번 누를시 창 여러개 생기는 문제생김.
 
@@ -81,11 +99,15 @@
 
             editInput.focus();
 
-            const saveEdit = () => {
+                const saveEdit = () => {
                 const newValue = editInput.value.trim();
 
                 if (newValue !== '') {
                     itemTitle.textContent = newValue;
+
+                    todoData.text = newValue;
+
+                    saveTodos();
                 }
 
                 editInput.remove();
@@ -93,8 +115,7 @@
                 itemTitle.style.display = 'inline';
             };
 
-      
-            // event 객체 안의 정보를 사용할때만 'enter' 작성
+              // event 객체 안의 정보를 사용할때만 'enter' 작성
             editInput.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
                     saveEdit();
@@ -107,15 +128,57 @@
                 saveEdit();
             });
 
-        })
-
-        todoList.appendChild(todoItem);
-
-        todoInput.value = '';
+        });
+        
+          todoList.appendChild(todoItem);
     };
 
-    todoForm.addEventListener('submit', handleFormSubmit);
+    const loadTodos = () => {
+        const storedTodos = localStorage.getItem('todos');
+
+        if (storedTodos) {
+            todos = JSON.parse(storedTodos);
+
+            todos.forEach((todo) => {
+                createTodo(todo);
+            });
+
+        }
+    };
+
+            
     
+    const handleFormSubmit = (event) => {
+        event.preventDefault();
+
+        const inputValue = todoInput.value.trim();
+
+        if (inputValue === '') return;
+
+        
+        const todoData = {
+            id: Date.now(),
+
+            text: inputValue,
+
+            completed: false
+        };
+
+        todos.push(todoData);
+
+        todoInput.value = '';
+
+        createTodo(todoData);
+
+        saveTodos();
+
+        };
+
+    todoForm.addEventListener('submit', handleFormSubmit);
+
+    
+    
+    loadTodos();
     
 
 </script>
