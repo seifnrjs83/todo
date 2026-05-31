@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>todo study</title>
+</head>
+
+<body>
+    <div>
+        <h1>todolist</h1>
+        <h3>write ur to do list</h3>
+
+        <form id="todo-form">
+            <input type="text" id="todo-input" placeholder="오늘의 할 일을 작성해 보세요.">
+            <button type="submit" id="todobtn">add</button>
+        </form>
+
+        <ul id="todo-list"></ul>
+    </div>
+
+    <template id="todo-template">
+        <li class="todo-item">
+          
+            <span class="item-title">todo 구글링</span>
+            <button class="edit-btn">edit</button>
+            <button class="delete-btn">delete</button>
+        </li>
+    </template>
+
+</body>
+
+<script>
+    const todoForm = document.getElementById('todo-form');
+    const todoInput = document.getElementById('todo-input');
+    const todoList = document.getElementById('todo-list');
+    const todoTemplate = document.getElementById('todo-template');
+    // 할일 생성 이벤트 작성
+    const handleFormSubmit = (event) => {
+        event.preventDefault();
+
+        const inputValue = todoInput.value.trim();
+
+        if (inputValue === '') return;
+ 
+        const todoItem = todoTemplate.content
+            .cloneNode(true)
+            .querySelector('.todo-item');
+
+            //itemtitle 중복 호출 방지, const로 정의
+        const itemTitle = todoItem.querySelector('.item-title');
+        
+            itemTitle.textContent = inputValue;
+            itemTitle.addEventListener('click', () => {
+                todoItem.classList.toggle('completed');
+            });
+
+        const deleteBtn = todoItem.querySelector('.delete-btn');
+
+        deleteBtn.addEventListener('click', () => {
+            todoItem.remove();
+        });
+
+        const editBtn = todoItem.querySelector('.edit-btn');
+
+        // 수정버튼 여러번 누를시 창 여러개 생기는 문제생김.
+
+        editBtn.addEventListener('click', () => {
+
+            // edit 여러번 눌러도 동일 창 안뜨게 방지코드
+            if (todoItem.querySelector('input')) return;
+
+            const editInput = document.createElement('input');
+
+            
+            editInput.value = itemTitle.textContent;
+
+            itemTitle.style.display = 'none';
+
+            todoItem.insertBefore(editInput, editBtn);
+
+            editInput.focus();
+
+            const saveEdit = () => {
+                const newValue = editInput.value.trim();
+
+                if (newValue !== '') {
+                    itemTitle.textContent = newValue;
+                }
+
+                editInput.remove();
+
+                itemTitle.style.display = 'inline';
+            };
+
+      
+            // event 객체 안의 정보를 사용할때만 'enter' 작성
+            editInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    saveEdit();
+                }
+
+            });
+
+            // edit 누르고 바깥쪽 아무곳이나 클릭하면 저장되게. blur 이벤트이름
+            editInput.addEventListener('blur', () => {
+                saveEdit();
+            });
+
+        })
+
+        todoList.appendChild(todoItem);
+
+        todoInput.value = '';
+    };
+
+    todoForm.addEventListener('submit', handleFormSubmit);
+    
+    
+
+</script>
+
+<style>
+    body {
+        background: #162b4e;
+        color: white;
+    }
+
+    .completed {
+        text-decoration: line-through;
+        opacity: 0.5;
+    }
+
+    div {
+        text-align: center;
+    }
+
+    ul {
+        list-style: none;
+        }
+
+    .todo-item {
+        margin: 15px 0;
+    }
+</style>
